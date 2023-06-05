@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>Img to Webp</title>
+		<link rel="stylesheet" href="index.css" />
+		<script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+		<link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
+		<script src="https://cdn.tailwindcss.com"></script>
+	</head>
+	<body>
+		<div class="grid grid-cols-[350px_auto]" id="app">
+			<div class="px-3 h-screen border-r-solid border-r-[1px] border-r-gray-300 sticky top-0">
+				<img src="logo.png" alt="" class="w-[200px] mx-auto mt-4 mb-6 pb-6" />
+				<div class="bg-gray-100 p-3 rounded text-sm flex flex-col">
+					<span class="font-semibold">Ruta de destino:</span>
+					<span id="destinyFilesPathShow" class="italic"></span>
+					<button id="selectFolder" class="ml-4 text-sm underline text-blue-400 text-right">Cambiar</button>
+				</div>
+				<button
+					id="openFolder"
+					class="border-solid border-[1px] w-full border-gray-800 text-sm rounded-lg mt-3 py-2 hover:text-gray-500 hover:border-gray-500"
+				>
+					Ver carpeta de destino
+				</button>
+				<div class="bg-gray-100 p-3 rounded text-sm flex flex-col mt-5">
+					<div class="w-full flex justify-between mb-3">
+						<span class="font-semibold">Calidad:</span>
+						<span id="qualityRangeLabel">70</span>
+					</div>
+					<input id="qualityRangeInput" class="form-range" type="range" min="50" max="100" step="1" value="70" />
+					<div class="w-full flex justify-between mt-1">
+						<span class="text-xs">50</span>
+						<span class="text-xs">100</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="px-12 py-8">
+				<div class="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mb-5" role="alert" id="pathAlert">
+					<p class="font-bold">Importante</p>
+					<p>Recuerda cambiar la carpeta de destino en el panel lateral.</p>
+				</div>
+
+				<div class="" id="dropArea">
+					<label
+						class="flex justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-md appearance-none cursor-pointer hover:border-gray-400 focus:outline-none"
+					>
+						<span class="flex items-center space-x-2">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="w-6 h-6 text-gray-600"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+								/>
+							</svg>
+							<span class="font-medium text-gray-600">
+								Arrastra los archivos aquí o
+								<span class="text-blue-600 underline">selecciona</span>
+							</span>
+						</span>
+						<input
+							type="file"
+							name="file_upload"
+							class="hidden"
+							id="files"
+							multiple
+							accept="image/png, image/jpeg, image/webp"
+						/>
+					</label>
+				</div>
+				<!-- <input
+					type="file"
+					
+					name="files"
+					multiple
+					accept="image/png, image/jpeg, image/webp"
+					class="bg-green-200"
+				/> -->
+				<div class="p-3 gap-7 border-[1px] border-gray-300 mt-7 [&>*:last-child]:!border-b-0" id="imagesContainer">
+					<p class="text-center w-full">Selecciona los archivos para procesar</p>
+				</div>
+				<div class="flex justify-end gap-3 mt-4">
+					<button id="convert-btn" class="bg-blue-800 text-white rounded-lg px-14 py-2 text-base">Convertir</button>
+					<button
+						class="border-1 inline-block border-solid bg-gray-200 px-14 py-2 rounded-lg font-semibold text-gray-800 text-base"
+						id="btn"
+						onClick="cleanImages()"
+					>
+						Limpiar
+					</button>
+				</div>
+				<div id="errorAlertContainer"></div>
+			</div>
+		</div>
+
+		<script src="../renderer.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/filesize/9.0.11/filesize.min.js"></script>
+		<script>
+			const inputFile = document.getElementById("files");
+			const imagesContainer = document.getElementById("imagesContainer");
+			const qualityRangeInput = document.getElementById("qualityRangeInput");
+			const qualityRangeLabel = document.getElementById("qualityRangeLabel");
+			let buttonsForOpenFile = undefined;
+
+			let imagesList = [];
+			let destinyFilesPath = "/";
+			let qualityForConvertion = 70;
+
+			const processImagesInFront = () => {
+				for (let index = 0; index < inputFile.files.length; index++) {
+					const img = inputFile.files[index];
+					img.statusConverter = "init";
+					img.finalSize = 0;
+					imagesList.push(img);
+				}
+				console.log(imagesList);
+				renderImages();
+			};
+
+			let dropArea = document.getElementById("dropArea");
+
+			dropArea.addEventListener("dragenter", preventDefaults, false);
+			dropArea.addEventListener("dragover", preventDefaults, false);
+			dropArea.addEventListener("dragleave", preventDefaults, false);
+			dropArea.addEventListener("drop", preventDefaults, false);
+
+			function preventDefaults(event) {
+				event.preventDefault();
+				event.stopPropagation();
+			}
+
+			dropArea.addEventListener("drop", handlerFunction, false);
+
+			function handlerFunction(e) {
+				console.log(event.dataTransfer.files);
+				const files = event.dataTransfer.files;
+				inputFile.files = files;
+				processImagesInFront();
+			}
+
+			const setDestinyFilesPath = (path) => {
+				destinyFilesPath = path;
+				document.getElementById("destinyFilesPathShow").innerHTML = destinyFilesPath;
+				if (destinyFilesPath != "/") {
+					document.getElementById("pathAlert").classList.add("hidden");
+				} else {
+					document.getElementById("pathAlert").classList.add("block");
+				}
+			};
+
+			setDestinyFilesPath("/");
+			// setDestinyFilesPath("/Users/juramirezp/Desktop");
+
+			inputFile.addEventListener("change", processImagesInFront);
+
+			qualityRangeInput.addEventListener("input", () => {
+				qualityRangeLabel.innerHTML = qualityRangeInput.value;
+				qualityForConvertion = parseInt(qualityRangeInput.value, 10);
+			});
+
+			const renderImages = () => {
+				let header = `<div class="py-3 grid grid-cols-6 place-items-center border-solid border-b-[1px] border-b-gray-200">
+						<p class="text-center font-semibold text-xs">Imagen</p>
+						<p class="text-center font-semibold text-xs">Estado</p>
+						<p class="text-center font-semibold text-xs">Tamaño Inicial</p>
+						<p class="text-center font-semibold text-xs">Tamaño Final</p>
+						<p class="text-center font-semibold text-xs">Espacio Ahorrado</p>
+					</div>`;
+
+				let content = "";
+				content += header;
+				imagesList.forEach((img) => {
+					content += `<div
+						class="py-3 grid grid-cols-6 place-items-center border-solid border-b-[1px] border-b-gray-200"
+					>
+						<img
+							src="${img.path}"
+							alt=""
+							class="w-[100px] h-[100px] object-cover rounded-md"
+						/>
+						<p class="text-center">${getImageStatus(img.statusConverter)}</p>
+						<p class="text-center">${getFileSize(img.size)}</p>
+						<p class="text-center">${getFileSize(img.finalSize)}</p>
+						<p class="text-center">${getSizeSaving(img.size, img.finalSize)}</p>`;
+
+					if (img.statusConverter == "complete") {
+						content += `<button class="underline text-blue-500 text-sm text-center w-full btn-open-file-path" data-filepath="${img.finalPath}">Ver archivo</button>`;
+					} else {
+						content += `<button class="text-gray-400 pointer-events-none text-sm text-center w-full">Ver archivo</button>`;
+					}
+					content += `</div>`;
+				});
+				imagesContainer.innerHTML = content;
+
+				//renderer,js
+				setEventForOpenFileButtons();
+			};
+
+			const setEventForOpenFileButtons = () => {
+				buttonsForOpenFile = document.querySelectorAll(".btn-open-file-path");
+
+				buttonsForOpenFile.forEach((btn) => {
+					btn.addEventListener("click", () => {
+						ipcRenderer.send("openFileInFolder", btn.dataset.filepath);
+					});
+				});
+			};
+
+			const getFileSize = (size) => {
+				if (size == 0) return "-";
+
+				const fileSize = filesize(size, { base: 10, standard: "jedec", round: 1 });
+				// console.log("🚀 ~ file: index.html:120 ~ fileSize:", fileSize);
+				return fileSize;
+			};
+
+			const getSizeSaving = (initialSize, finalSize) => {
+				if (finalSize == 0) return "-";
+
+				return `${Math.trunc((100 * finalSize) / initialSize) - 100}%`;
+			};
+
+			const getImageStatus = (status) => {
+				switch (status) {
+					case "init":
+						return "Pendiente";
+						break;
+					case "processing":
+						return "En proceso";
+						break;
+					case "complete":
+						return "Completado";
+						break;
+
+					default:
+						break;
+				}
+			};
+
+			const cleanImages = () => {
+				inputFile.value = "";
+				imagesList = [];
+				// renderImages();
+				imagesContainer.innerHTML = `<p class="text-center w-full">Selecciona los archivos para procesar</p>`;
+			};
+
+			const showErrors = (err) => {
+				const content = `<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mt-8" role="alert">
+					<p class="font-bold">Error</p>
+					<p>${err}</p>
+				</div>`;
+
+				document.getElementById("errorAlertContainer").innerHTML = content;
+			};
+		</script>
+	</body>
+</html>

@@ -1,0 +1,33 @@
+{
+	"name": "img-to-webp",
+	"productName": "img-to-webp",
+	"version": "1.0.0",
+	"description": "Aplicación para conversión, compresión y optimización de imágenes de sitios web",
+	"main": "src/index.js",
+	"scripts": {
+		"start": "electron-forge start",
+		"package": "electron-forge package",
+		"make": "electron-forge make",
+		"publish": "electron-forge publish",
+		"lint": "echo \"No linting configured\""
+	},
+	"keywords": [],
+	"author": {
+		"name": "Juan Carlos Elias Ramirez Peralta",
+		"email": "jua.ramirezp@gmail.com"
+	},
+	"license": "MIT",
+	"dependencies": {
+		"electron-squirrel-startup": "^1.0.0",
+		"sharp": "^0.32.1"
+	},
+	"devDependencies": {
+		"@electron-forge/cli": "^6.1.1",
+		"@electron-forge/maker-deb": "^6.1.1",
+		"@electron-forge/maker-rpm": "^6.1.1",
+		"@electron-forge/maker-squirrel": "^6.1.1",
+		"@electron-forge/maker-zip": "^6.1.1",
+		"electron": "25.0.1",
+		"tailwindcss": "^3.3.2"
+	}
+}
